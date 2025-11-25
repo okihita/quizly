@@ -32,22 +32,32 @@ function parseMarkdown(content: string, categoryKey: string): Question[] {
     const id = parseInt(qMatch[1]);
     const questionText = qMatch[2].trim();
 
-    const optionsMatch = block.match(/- A\)([\s\S]*?)- B\)([\s\S]*?)- C\)([\s\S]*?)- D\)([\s\S]*?)(?=\n>|\n\n>)/);
-    if (!optionsMatch) return;
+    // Extract each option individually to find which has ✓
+    const optionAMatch = block.match(/- A\)\s*([\s\S]*?)(?=\n- B\))/);
+    const optionBMatch = block.match(/- B\)\s*([\s\S]*?)(?=\n- C\))/);
+    const optionCMatch = block.match(/- C\)\s*([\s\S]*?)(?=\n- D\))/);
+    const optionDMatch = block.match(/- D\)\s*([\s\S]*?)(?=\n\n>|\n>)/);
 
-    const options = [
-      optionsMatch[1].replace(/✓/g, "").trim(),
-      optionsMatch[2].replace(/✓/g, "").trim(),
-      optionsMatch[3].replace(/✓/g, "").trim(),
-      optionsMatch[4].replace(/✓/g, "").trim(),
+    if (!optionAMatch || !optionBMatch || !optionCMatch || !optionDMatch) return;
+
+    const rawOptions = [
+      optionAMatch[1].trim(),
+      optionBMatch[1].trim(),
+      optionCMatch[1].trim(),
+      optionDMatch[1].trim(),
     ];
 
-    const correctIndex = block.includes("- A)") && block.match(/- A\)[^✓]*✓/) ? 0 :
-                         block.includes("- B)") && block.match(/- B\)[^✓]*✓/) ? 1 :
-                         block.includes("- C)") && block.match(/- C\)[^✓]*✓/) ? 2 :
-                         block.includes("- D)") && block.match(/- D\)[^✓]*✓/) ? 3 : -1;
+    // Find correct answer by checking which option contains ✓
+    let correctIndex = -1;
+    const options = rawOptions.map((opt, idx) => {
+      if (opt.includes("✓")) {
+        correctIndex = idx;
+        return opt.replace(/\s*✓\s*/g, "").trim();
+      }
+      return opt;
+    });
 
-    const rationaleMatch = block.match(/>\s*\*\*Rationale:\*\*\s*([\s\S]*?)(?=\n\n|$)/);
+    const rationaleMatch = block.match(/>\s*\*\*Rationale:\*\*\s*([\s\S]*?)(?=\n\n---|\n\n###|$)/);
     const rationale = rationaleMatch ? rationaleMatch[1].trim() : "";
 
     if (correctIndex >= 0) {

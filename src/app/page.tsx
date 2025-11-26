@@ -41,24 +41,33 @@ export default function Home() {
 
   // Load from localStorage on mount
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const data = JSON.parse(saved);
-        if (data.progress) setProgress(data.progress);
-        if (data.darkMode !== undefined) setDarkMode(data.darkMode);
+    const load = () => {
+      try {
+        if (typeof window !== "undefined" && window.localStorage) {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            const data = JSON.parse(saved);
+            if (data.progress) setProgress(data.progress);
+            if (data.darkMode !== undefined) setDarkMode(data.darkMode);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load progress", e);
       }
-    } catch (e) {
-      console.error("Failed to load progress", e);
-    }
-    setLoaded(true);
+      setLoaded(true);
+    };
+    // Small delay to ensure hydration completes
+    const timer = setTimeout(load, 50);
+    return () => clearTimeout(timer);
   }, []);
 
   // Save to localStorage on change
   useEffect(() => {
     if (!loaded) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ progress, darkMode }));
+      if (typeof window !== "undefined" && window.localStorage) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ progress, darkMode }));
+      }
     } catch (e) {
       console.error("Failed to save progress", e);
     }

@@ -39,21 +39,28 @@ export default function Home() {
   const [showResult, setShowResult] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  // Load from localStorage
+  // Load from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const data = JSON.parse(saved);
-      setProgress(data.progress || {});
-      setDarkMode(data.darkMode ?? true);
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.progress) setProgress(data.progress);
+        if (data.darkMode !== undefined) setDarkMode(data.darkMode);
+      }
+    } catch (e) {
+      console.error("Failed to load progress", e);
     }
     setLoaded(true);
   }, []);
 
-  // Save to localStorage
+  // Save to localStorage on change
   useEffect(() => {
-    if (loaded) {
+    if (!loaded) return;
+    try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ progress, darkMode }));
+    } catch (e) {
+      console.error("Failed to save progress", e);
     }
   }, [progress, darkMode, loaded]);
 
@@ -205,7 +212,11 @@ export default function Home() {
     </button>
   );
 
-  if (!loaded) return null;
+  if (!loaded) return (
+    <main className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+      <div className="text-cyan-400 animate-pulse">Loading...</div>
+    </main>
+  );
 
   // Home screen
   if (!selectedCategory) {
@@ -288,15 +299,15 @@ export default function Home() {
                 <h3 className={`font-bold ${text} text-sm md:text-base mb-1`}>All Modules</h3>
                 <p className={`text-xs ${textMuted} mb-3`}>{questions.length} questions</p>
 
-                <label className={`flex items-center gap-2 mb-3 cursor-pointer ${textMuted} text-xs`}>
-                  <input
-                    type="checkbox"
-                    checked={randomize}
-                    onChange={(e) => setRandomize(e.target.checked)}
-                    className="w-4 h-4 rounded accent-cyan-500"
-                  />
-                  Randomize order
-                </label>
+                <button
+                  onClick={() => setRandomize(!randomize)}
+                  className={`flex items-center gap-2 mb-3 ${textMuted} text-xs`}
+                >
+                  <div className={`relative w-10 h-5 rounded-full transition-all duration-300 ${randomize ? "bg-cyan-500 shadow-[0_0_10px_rgba(0,255,255,0.5)]" : darkMode ? "bg-white/20" : "bg-slate-300"}`}>
+                    <div className={`absolute top-0.5 w-4 h-4 rounded-full transition-all duration-300 ${randomize ? "left-5 bg-white shadow-[0_0_8px_rgba(0,255,255,0.8)]" : "left-0.5 bg-white/80"}`} />
+                  </div>
+                  <span className={randomize ? accent : ""}>Randomize</span>
+                </button>
 
                 {progress["all"] && (
                   <div className="mb-3">

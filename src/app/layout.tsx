@@ -7,6 +7,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Quizly - Blockchain & Crypto Quiz",
   description: "Test your knowledge on Blockchain, Crypto, Ethereum, Lisk & dApps",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
